@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>FRAME｜展示室への招待</title>
+<meta property="og:title" content="FRAME｜展示室への招待">
+<meta property="og:description" content="毎日の一枚を、額縁に入れて。友達の展示室に招待されています。">
+<style>
+  /* FRAME の配色（アプリの AppColors と同じ） */
+  :root {
+    --olive: #2E3826; --olive-deep: #1F271A; --gold: #B8955A; --gold-light: #E2C98F;
+    --ivory: #F2EADB; --brown: #3B2A1E; --black: #14120F;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% -10%, #46533A 0%, var(--olive) 45%, var(--olive-deep) 100%) fixed;
+    color: var(--ivory);
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+    display: flex; justify-content: center; align-items: center; min-height: 100vh;
+    padding: 32px 20px;
+  }
+  main { width: 100%; max-width: 420px; text-align: center; }
+  .logo { font-family: "Cormorant Garamond", "Times New Roman", serif; font-weight: 600;
+          letter-spacing: .35em; color: var(--gold-light); font-size: 34px; margin: 0 0 4px .35em; }
+  .tagline { font-size: 13px; opacity: .7; margin: 0 0 32px; }
+  /* 額縁風のカード */
+  .card { padding: 14px; background: linear-gradient(135deg, #F3DC9C, #C59B4E 45%, #7A5726);
+          box-shadow: 0 10px 30px rgba(0,0,0,.55); }
+  .card-inner { background: var(--olive-deep); border: 1px solid #3B2A1E; padding: 28px 22px; }
+  h1 { font-size: 20px; margin: 0 0 12px; letter-spacing: .08em; }
+  p { font-size: 14px; line-height: 1.8; margin: 0 0 16px; }
+  .button { display: block; width: 100%; padding: 15px; margin: 8px 0 0; border: 1px solid var(--gold);
+            background: var(--gold); color: var(--black); font: inherit; font-size: 16px; font-weight: 600;
+            letter-spacing: .1em; text-decoration: none; cursor: pointer; }
+  .button.outline { background: transparent; color: var(--gold-light); }
+  .code { margin: 20px 0 6px; padding: 12px; background: rgba(0,0,0,.3); border: 1px dashed rgba(184,149,90,.6);
+          font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; word-break: break-all;
+          color: var(--gold-light); user-select: all; }
+  .note { font-size: 12px; opacity: .65; margin-top: 20px; line-height: 1.7; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <p class="logo">FRAME</p>
+  <p class="tagline">毎日の一枚を、額縁に入れて。</p>
+
+  <div class="card"><div class="card-inner">
+    <!-- 招待コードがあるとき -->
+    <section id="invite" class="hidden">
+      <h1>展示室への招待</h1>
+      <p>友達の展示室に招待されています。<br>FRAMEアプリで内容を確認して、参加してください。</p>
+      <a id="open" class="button" href="#">アプリで開く</a>
+      <div id="code" class="code"></div>
+      <button id="copy" class="button outline" type="button">招待コードをコピー</button>
+      <p class="note">
+        アプリが開かないときは、FRAMEアプリの<br>
+        マイページ →「グループの管理」→「招待コードで参加」に<br>
+        このコードを貼り付けてください。
+      </p>
+    </section>
+
+    <!-- 招待コードがないとき -->
+    <section id="missing" class="hidden">
+      <h1>招待コードが見つかりません</h1>
+      <p>リンクが途中で切れている可能性があります。<br>招待してくれた友達に、もう一度送ってもらってください。</p>
+    </section>
+  </div></div>
+
+  <p class="note">FRAME は、毎日1枚の写真に日替わりの額縁を付けて、<br>友達だけの美術館に飾る写真アプリです。</p>
+</main>
+
+<script>
+  // URLの「?c=招待コード」から、コードを取り出す（32文字の英数字）
+  var raw = new URLSearchParams(location.search).get('c') || '';
+  var match = raw.toLowerCase().match(/[0-9a-f]{32}/);
+  var token = match ? match[0] : null;
+
+  if (!token) {
+    document.getElementById('missing').classList.remove('hidden');
+  } else {
+    // アプリを開くためのリンク（アプリ側に登録してある framegallery:// の形）
+    var appUrl = 'framegallery://invite?c=' + token;
+    document.getElementById('invite').classList.remove('hidden');
+    document.getElementById('open').href = appUrl;
+    document.getElementById('code').textContent = token;
+
+    document.getElementById('copy').addEventListener('click', function () {
+      var button = this;
+      var done = function () { button.textContent = 'コピーしました'; };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(token).then(done, function () { selectCode(); });
+      } else {
+        selectCode();
+      }
+    });
+
+    // スマートフォンでは、ページを開いたらすぐにアプリを開いてみる
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      setTimeout(function () { location.href = appUrl; }, 300);
+    }
+  }
+
+  // コピーできない環境では、コードを選択状態にして手でコピーしてもらう
+  function selectCode() {
+    var range = document.createRange();
+    range.selectNodeContents(document.getElementById('code'));
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+</script>
+</body>
+</html>
